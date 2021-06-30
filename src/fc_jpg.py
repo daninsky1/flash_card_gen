@@ -1,3 +1,11 @@
+"""
+MIT License
+
+Copyright (c) 2020 Daniel Silva dos Santos, Marina Rodrigues Bono.
+
+Source: https://spdx.org/licenses/MIT.html
+"""
+
 from PIL import Image, ImageDraw, ImageFont
 import colour
 from image_utils import ImageText
