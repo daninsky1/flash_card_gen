@@ -1,3 +1,25 @@
 # ignore venv and pycharm files
-./venv_linux
-./.idea/
+linux-venv/
+.idea/
+src/__pycache__/
+
+# ignore extensions
+**.ttf
+**.xml
+**.fodg
+
+# ignore fonts and xml_blocks
+xml_blocks/
+fonts/
+
+# ignore external files
+colors_constants.py
+out/
+
+# ignore external scripts
+src/image_utils.py
+src/utils.py
+src/example_image_utils.py
+src/sheet_utils.py
+src/fc_jpg(copy).py
+src/generate_cards.py
