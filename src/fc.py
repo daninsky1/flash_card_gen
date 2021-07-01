@@ -25,11 +25,7 @@ from PIL import Image, ImageDraw, ImageFont
 from PIL import ImageColor
 from image_utils import ImageText
 import colors_const
-import colour
 import piexif
-import os
-import os.path
-import pathlib
 
 
 class FCColor:
@@ -50,7 +46,7 @@ class FCColor:
 
     @classmethod
     def from_list(cls, color_list):
-        """From list or tuple"""
+        """FCColor from list or tuple of hex string values."""
         if not isinstance(color_list, list) and not isinstance(color_list, tuple):
             raise TypeError("color_list be a tuple or list.")
 
@@ -69,12 +65,16 @@ class FCColor:
 class FlashCard:
     """Card generates a flash card jpg and fodg."""
 
-    def __init__(self, fc_sz, card_color=None, title=None, sentences=None, card_number=None):
+    def __init__(self, fc_sz, card_color=None, title=None, sentences=None,
+                 card_number=None, watermark=None):
         if not isinstance(fc_sz, list) and not isinstance(fc_sz, tuple):
             raise TypeError('size must be a tuple or list')
         if len(fc_sz) != 2:
             raise AttributeError('size must have 2 coordinate values xy')
-
+        if not isinstance(sentences, list) and not isinstance(sentences, tuple):
+            raise TypeError('sentences must be a tuple or list')
+        elif len(sentences) > 20:
+            raise AttributeError("sentences exceeds 20 elements")
 
         # Flash card and boxes sizes
         self.fc_sz = fc_sz
@@ -84,10 +84,12 @@ class FlashCard:
         self.div_text_box = list(range(self.title_box_sz[1], self.h, round(self.h / 22)))
 
         # Flash card appearance
-        self.card_color = self.set_color(card_color)
+        self.card_color = None
+        self.set_color(card_color)
         self.title_font = "../fonts/JosefinSans-Bold.ttf"
         self.text_font1 = "../fonts/JosefinSans-Bold.ttf"
         self.text_font2 = "../fonts/JosefinSans-Regular.ttf"
+        self.watermark = watermark
 
         # Flash card text data
         self.title = title
@@ -110,7 +112,7 @@ class FlashCard:
         exif_dict = {"0th": zeroth_ifd}
         self.exif_bytes = piexif.dump(exif_dict)
 
-    def set_color(self, card_color=None):
+    def set_color(self, card_color):
         """Set flash card color.
 
         :param card_color: FCColor
@@ -125,58 +127,65 @@ class FlashCard:
     def draw_bg(self):
         """Draw flash card background."""
         if self.flash_card is None:
-            self.flash_card = Image.new("RGB", self.fc_sz, self.bg_secon_color)
+            self.flash_card = Image.new("RGB", self.fc_sz, self.card_color.title_box_color)
         draw = ImageDraw.Draw(self.flash_card)
         title_box = [0, 0, self.title_box_sz[0], self.title_box_sz[1]]
-        draw.rectangle(title_box, fill=self.bg_title_color)
+        # TODO: check this redundancy
+        draw.rectangle(title_box, fill=self.card_color.title_box_color)
 
-        for chunk in self.div_H1_chunks:
-            draw.rectangle(((0, chunk[0]), (self.w, chunk[1])), fill=self.bg_first_color)
-
-        fnt = ImageFont.truetype(self.reg_font, 25)
-        fnt2 = ImageFont.truetype(self.reg_font, 40)
-        n_size = fnt2.getsize(str(self.card_number))[0]
-        draw.text((15, 15), "@danieldaninsky", font=fnt, fill=self.font_title_color)
+        # Draw stripes pattern boxes
+        for i in range(len(self.div_text_box)):
+            if i == len(self.div_text_box)-2:
+                break
+            if (i+1) % 2 != 0:
+                draw.rectangle(((0, self.div_text_box[i]), (self.w, self.div_text_box[i+1])),
+                               fill=self.card_color.text_box_color1)
+            else:
+                draw.rectangle(((0, self.div_text_box[i]), (self.w, self.div_text_box[i+1])),
+                               fill=self.card_color.text_box_color2)
+        # Draw watermark
+        if self.watermark:
+            fnt = ImageFont.truetype(self.text_font2, 25)
+            fnt2 = ImageFont.truetype(self.text_font2, 40)
+            n_size = fnt2.getsize(str(self.card_number))[0]
+            draw.text((15, 15), self.watermark, font=fnt, fill=self.card_color.title_text_color)
+        # Draw card number
         if self.card_number:
-            draw.text(((self.w - (30 + n_size)), 30), str(self.card_number), font=fnt2, fill=self.font_title_color)
+            draw.text(((self.w - (30 + n_size)), 30), str(self.card_number), font=self.text_font2, fill=self.self.card_color.title_text_color)
 
     def draw_title(self):
         """Draw flash card title."""
         if self.flash_card is None:
-            self.flash_card = Image.new('RGB', self.fc_sz, self.color[0][1])
+            self.flash_card = Image.new('RGB', self.fc_sz, self.card_color.title_box_color)
         txt = ImageText(self.flash_card)
         txt.write_text_box((0, 0), self.title, box_width=self.w,
-                           font_filename=self.bold_font, font_size=80,
-                           color=self.font_title_color,
+                           font_filename=self.text_font1, font_size=80,
+                           color=self.card_color.title_text_color,
                            place='center', height_compensations=(60, 0, 0))
 
     def draw_sentences(self):
         """Draw flash card sentences"""
         if self.flash_card is None:
-            self.flash_card = Image.new('RGB', self.fc_sz, self.bg_secon_color)
+            self.flash_card = Image.new("RGB", self.fc_sz, self.card_color.text_box_color2)
         txt = ImageText(self.flash_card)
-        all_sentences = []
-
-        for sentence in self.sentences:
-            all_sentences.append(sentence[0])
-            all_sentences.append(sentence[1])
 
         fnt = self.text_font1
-        count = 0
-        for i, sentence in enumerate(all_sentences):
-            count += 1
-            print(count, " - ", sentence)
+
+        for i, sentence in enumerate(self.sentences):
+            print(i+1, " - ", sentence)
             txt.write_text_box((0, self.div_text_box[i]), sentence,
                                box_width=self.w,
                                font_filename=fnt,
                                font_size=42, font_min_size=34,
-                               color=self.font_sente_color,
+                               color=self.card_color.text_color,
                                place='center', height_compensations=(26, 30, 12))
-            fnt = self.text_font2 if fnt == self.text_font1 else fnt = self.text_font1
+            if fnt == self.text_font1:
+                fnt = self.text_font2
+            else:
+                fnt = self.text_font1
 
     def __draw_all(self):
         """Draw all flash card elements."""
-        self.card_color()
         self.draw_bg()
         self.draw_title()
         self.draw_sentences()
@@ -186,7 +195,7 @@ class FlashCard:
             self.__draw_all()
         else:
             print("Warning: Calling any draw method will disable the automatic call to __draw_all().")
-        self.draw_sentences().save(path, exif=self.exif_bytes)
+        self.flash_card.save(path, exif=self.exif_bytes)
 
 
 if __name__ == '__main__':
