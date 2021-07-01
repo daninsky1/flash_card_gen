@@ -22,7 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from PIL import Image, ImageDraw, ImageFont
+from PIL import ImageColor
 from image_utils import ImageText
+import colors_const
 import colour
 import piexif
 import os
@@ -34,14 +36,17 @@ class FCColor:
     def __init__(self, title_box_color, text_box_color1, text_box_color2,
                  title_text_color, text_color):
         """
-        :param bg_colors: tuple or list with 2 elements
-        :param text_colors: tuple or list with 2 elements
+        :param title_box_color: A color string
+        :param text_box_color1: A color string
+        :param text_box_color2: A color string
+        :param title_text_color: A color string
+        :param text_color: A color string
         """
-        self.title_box_color = title_box_color
-        self.text_box_color1 = text_box_color1
-        self.text_box_color2 = text_box_color2
-        self.title_text_color = title_text_color
-        self.text_color = text_color
+        self.title_box_color = ImageColor.getrgb(title_box_color)
+        self.text_box_color1 = ImageColor.getrgb(text_box_color1)
+        self.text_box_color2 = ImageColor.getrgb(text_box_color2)
+        self.title_text_color = ImageColor.getrgb(title_text_color)
+        self.text_color = ImageColor.getrgb(text_color)
 
     @classmethod
     def from_list(cls, color_list):
@@ -61,28 +66,25 @@ class FCColor:
             return cls(color_list[0], color_list[1], color_list[2], color_list[3], color_list[4])
 
 
-
 class FlashCard:
     """Card generates a flash card jpg and fodg."""
 
-    def __init__(self, size, card_colors=None, title=None, sentences=None, card_number=None):
-        if not isinstance(size, list) and not isinstance(size, tuple):
+    def __init__(self, fc_sz, card_color=None, title=None, sentences=None, card_number=None):
+        if not isinstance(fc_sz, list) and not isinstance(fc_sz, tuple):
             raise TypeError('size must be a tuple or list')
-        if len(size) != 2:
+        if len(fc_sz) != 2:
             raise AttributeError('size must have 2 coordinate values xy')
-        if card_colors is None:
-            card_colors = (((0, 0, 0), (47, 79, 79), (112, 128, 144)),
-                           ((255, 255, 255), (255, 255, 255)))
+
 
         # Flash card and boxes sizes
-        self.size = size
-        self.w, self.h = size
+        self.fc_sz = fc_sz
+        self.w, self.h = fc_sz
         self.title_box_sz = [self.w, 174]  # px
         # Height division areas for text boxes and text
-        self.div_text_box = list(range(self.title_box_sz, self.h, round(self.h / 22)))
+        self.div_text_box = list(range(self.title_box_sz[1], self.h, round(self.h / 22)))
 
         # Flash card appearance
-        self.card_colors = card_colors
+        self.card_color = self.set_color(card_color)
         self.title_font = "../fonts/JosefinSans-Bold.ttf"
         self.text_font1 = "../fonts/JosefinSans-Bold.ttf"
         self.text_font2 = "../fonts/JosefinSans-Regular.ttf"
@@ -108,19 +110,22 @@ class FlashCard:
         exif_dict = {"0th": zeroth_ifd}
         self.exif_bytes = piexif.dump(exif_dict)
 
-    def set_colors(self, colors):
-        """Set background and font colors:
+    def set_color(self, card_color=None):
+        """Set flash card color.
 
-        colors = tuple(((title_box_color, text_box_color1, text_box_color2),
-                        (title_text_color, text_color)))
+        :param card_color: FCColor
+        :return: void
         """
-        # TODO: make a error handler or make an fccolor obj
-        self.card_colors = colors
+        if card_color is None:
+            card_color = FCColor.from_list(colors_const.COLOR_NAMES_TO_HEX["Black_DarkSlateGray_SlateGray"])
+        elif not isinstance(card_color, FCColor):
+            raise TypeError("card_color must be FCColor")
+        self.card_color = card_color
 
     def draw_bg(self):
         """Draw flash card background."""
         if self.flash_card is None:
-            self.flash_card = Image.new('RGB', self.size, self.bg_secon_color)
+            self.flash_card = Image.new("RGB", self.fc_sz, self.bg_secon_color)
         draw = ImageDraw.Draw(self.flash_card)
         title_box = [0, 0, self.title_box_sz[0], self.title_box_sz[1]]
         draw.rectangle(title_box, fill=self.bg_title_color)
@@ -138,7 +143,7 @@ class FlashCard:
     def draw_title(self):
         """Draw flash card title."""
         if self.flash_card is None:
-            self.flash_card = Image.new('RGB', self.size, self.color[0][1])
+            self.flash_card = Image.new('RGB', self.fc_sz, self.color[0][1])
         txt = ImageText(self.flash_card)
         txt.write_text_box((0, 0), self.title, box_width=self.w,
                            font_filename=self.bold_font, font_size=80,
@@ -148,7 +153,7 @@ class FlashCard:
     def draw_sentences(self):
         """Draw flash card sentences"""
         if self.flash_card is None:
-            self.flash_card = Image.new('RGB', self.size, self.bg_secon_color)
+            self.flash_card = Image.new('RGB', self.fc_sz, self.bg_secon_color)
         txt = ImageText(self.flash_card)
         all_sentences = []
 
@@ -171,17 +176,17 @@ class FlashCard:
 
     def __draw_all(self):
         """Draw all flash card elements."""
-        self.card_colors()
+        self.card_color()
         self.draw_bg()
         self.draw_title()
         self.draw_sentences()
 
-    def save(self, name):
+    def save(self, path):
         if self.flash_card is None:
             self.__draw_all()
-        else
+        else:
             print("Warning: Calling any draw method will disable the automatic call to __draw_all().")
-        self.draw_sentences().save(name, exif=self.exif_bytes)
+        self.draw_sentences().save(path, exif=self.exif_bytes)
 
 
 if __name__ == '__main__':

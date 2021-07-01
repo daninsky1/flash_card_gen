@@ -1,4 +1,12 @@
-colors = {
+# Colors.
+# Name convention:
+# Describe the color like a class e.g. LightBlue.
+# Describe the overall color or
+# title color followed by the first and sec color
+# separeted by underscore e.g. Green_DarkBlue_Cyan.
+# ((title_box_color, text_box1_color, text_box2_color),
+# (title_text_color, text_color))
+COLOR_NAMES_TO_HEX = {
     "Blue":
         (("#52B1FF", "#156CB3", "#38A6FF"), ("#FFFFFF", "#FFFFFF")),
     "DarkGreen":
@@ -74,3 +82,5 @@ colors = {
     "Bronze":
         (("#BF978E", "#BF5E49", "#D9857E"), ("#FFFFFF", "#FFFFFF")),
 }
+
+COLOR_NAMES = list(COLOR_NAMES_TO_HEX)
