@@ -84,7 +84,7 @@ class FlashCard:
         self.div_text_box = list(range(self.title_box_sz[1], self.h, round(self.h / 22)))
 
         # Flash card appearance
-        self.card_color = None
+        self.card_color = card_color
         self.set_color(card_color)
         self.title_font = "../fonts/JosefinSans-Bold.ttf"
         self.text_font1 = "../fonts/JosefinSans-Bold.ttf"
@@ -99,18 +99,9 @@ class FlashCard:
         # Flash card
         self.flash_card = None
 
-        # TODO: set the future of exif info
-        # Exif info.
-        zeroth_ifd = {
-            piexif.ImageIFD.Artist: u"Daninsky, Daniel Silva dos Santos",
-            piexif.ImageIFD.Software: u"Duo Breaker script",
-            piexif.ImageIFD.Copyright: u"(CC BY 4.0) Attribution 4.0 International",
-            piexif.ImageIFD.XPComment: "Phrases from duolingo.com scraped with Duo Breaker script. /"
-                                       "@danieldaninsky, @Daninsky, @Daninsky12".encode("utf-16"),
-            piexif.ImageIFD.XPAuthor: "Daninsky".encode("utf-16")
-        }
-        exif_dict = {"0th": zeroth_ifd}
-        self.exif_bytes = piexif.dump(exif_dict)
+        # Metadata info
+        self.exif_bytes = None
+        self.set_exif("", "", "", "", "")
 
     def set_color(self, card_color):
         """Set flash card color.
@@ -183,6 +174,22 @@ class FlashCard:
                 fnt = self.text_font2
             else:
                 fnt = self.text_font1
+
+    def set_exif(self, artist, software, copyright, comment, author):
+        """Here you can set some of the metadata of the JPG.
+
+        If you would like to set more metadata check the piexif doc and
+        https://www.exiv2.org/tags.html for some extra tags.
+        """
+        zeroth_ifd = {
+            piexif.ImageIFD.Artist: copyright.encode("utf-8"),
+            piexif.ImageIFD.Software: software.encode("utf-8"),
+            piexif.ImageIFD.Copyright: copyright.encode("utf-8"),
+            piexif.ImageIFD.XPComment: comment.encode("utf-16"),
+            piexif.ImageIFD.XPAuthor: author.encode("utf-16")
+        }
+        exif_dict = {"0th": zeroth_ifd}
+        self.exif_bytes = piexif.dump(exif_dict)
 
     def __draw_all(self):
         """Draw all flash card elements."""
