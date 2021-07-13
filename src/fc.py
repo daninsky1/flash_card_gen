@@ -65,21 +65,17 @@ class FCColor:
 class FlashCard:
     """Card generates a flash card jpg and fodg."""
 
-    def __init__(self, fc_sz, card_color=None, title=None, sentences=None,
+    def __init__(self, card_color=None, title=None, sentences=None,
                  card_number=None, watermark=None):
-        if not isinstance(fc_sz, list) and not isinstance(fc_sz, tuple):
-            raise TypeError('size must be a tuple or list')
-        if len(fc_sz) != 2:
-            raise AttributeError('size must have 2 coordinate values xy')
         if not isinstance(sentences, list) and not isinstance(sentences, tuple):
             raise TypeError('sentences must be a tuple or list')
         elif len(sentences) > 20:
             raise AttributeError("sentences exceeds 20 elements")
 
         # Flash card and boxes sizes
-        self.fc_sz = fc_sz
-        self.w, self.h = fc_sz
-        self.title_box_sz = [self.w, 174]  # px
+        self.fc_sz = (1080, 1920)       # Hard coded size
+        self.w, self.h = self.fc_sz
+        self.title_box_sz = [self.w, 174]  # Hard coded title box size
         # Height division areas for text boxes and text
         self.div_text_box = list(range(self.title_box_sz[1], self.h, round(self.h / 22)))
 
