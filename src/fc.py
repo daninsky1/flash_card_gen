@@ -23,6 +23,8 @@ SOFTWARE.
 """
 from PIL import Image, ImageDraw, ImageFont
 from PIL import ImageColor
+from PIL.Image import Image
+
 from image_utils import ImageText
 import colors_const
 import piexif
@@ -73,10 +75,10 @@ class FlashCard:
             raise AttributeError("sentences exceeds 20 elements")
 
         # Flash card and boxes sizes
-        self.fc_sz = (1080, 1920)       # Hard coded size
+        self.flash_card = Image.new("RGB", self.fc_sz, "#777777")
+        self.fc_sz = (1080, 1920)  # Hard coded size
         self.w, self.h = self.fc_sz
         self.title_box_sz = [self.w, 174]  # Hard coded title box size
-        # Height division areas for text boxes and text
         self.div_text_box = list(range(self.title_box_sz[1], self.h, round(self.h / 22)))
 
         # Flash card appearance
@@ -91,9 +93,6 @@ class FlashCard:
         self.title = title
         self.sentences = sentences
         self.card_number = card_number
-
-        # Flash card
-        self.flash_card = None
 
         # Metadata info
         self.exif_bytes = None
@@ -113,23 +112,22 @@ class FlashCard:
 
     def draw_bg(self):
         """Draw flash card background."""
-        if self.flash_card is None:
-            self.flash_card = Image.new("RGB", self.fc_sz, self.card_color.title_box_color)
         draw = ImageDraw.Draw(self.flash_card)
         title_box = [0, 0, self.title_box_sz[0], self.title_box_sz[1]]
         # TODO: check this redundancy
         draw.rectangle(title_box, fill=self.card_color.title_box_color)
 
-        # Draw stripes pattern boxes
+        # Sentence boxes
         for i in range(len(self.div_text_box)):
-            if i == len(self.div_text_box)-2:
+            if i == len(self.div_text_box) - 2:
                 break
-            if (i+1) % 2 != 0:
-                draw.rectangle(((0, self.div_text_box[i]), (self.w, self.div_text_box[i+1])),
+            if (i + 1) % 2 != 0:
+                draw.rectangle(((0, self.div_text_box[i]), (self.w, self.div_text_box[i + 1])),
                                fill=self.card_color.text_box_color1)
             else:
-                draw.rectangle(((0, self.div_text_box[i]), (self.w, self.div_text_box[i+1])),
+                draw.rectangle(((0, self.div_text_box[i]), (self.w, self.div_text_box[i + 1])),
                                fill=self.card_color.text_box_color2)
+        # TODO: remove n_size bug
         # Draw watermark
         if self.watermark:
             fnt = ImageFont.truetype(self.text_font2, 25)
@@ -138,12 +136,11 @@ class FlashCard:
             draw.text((15, 15), self.watermark, font=fnt, fill=self.card_color.title_text_color)
         # Draw card number
         if self.card_number:
-            draw.text(((self.w - (30 + n_size)), 30), str(self.card_number), font=self.text_font2, fill=self.self.card_color.title_text_color)
+            draw.text(((self.w - (30 + n_size)), 30), str(self.card_number), font=self.text_font2,
+                      fill=self.card_color.title_text_color)
 
     def draw_title(self):
         """Draw flash card title."""
-        if self.flash_card is None:
-            self.flash_card = Image.new('RGB', self.fc_sz, self.card_color.title_box_color)
         txt = ImageText(self.flash_card)
         txt.write_text_box((0, 0), self.title, box_width=self.w,
                            font_filename=self.text_font1, font_size=80,
@@ -152,20 +149,17 @@ class FlashCard:
 
     def draw_sentences(self):
         """Draw flash card sentences"""
-        if self.flash_card is None:
-            self.flash_card = Image.new("RGB", self.fc_sz, self.card_color.text_box_color2)
-        txt = ImageText(self.flash_card)
-
+        im_txt = ImageText(self.flash_card)
         fnt = self.text_font1
 
         for i, sentence in enumerate(self.sentences):
-            print(i+1, " - ", sentence)
-            txt.write_text_box((0, self.div_text_box[i]), sentence,
-                               box_width=self.w,
-                               font_filename=fnt,
-                               font_size=42, font_min_size=34,
-                               color=self.card_color.text_color,
-                               place='center', height_compensations=(26, 30, 12))
+            print(i + 1, " - ", sentence)
+            im_txt.write_text_box((0, self.div_text_box[i]), sentence,
+                                  box_width=self.w,
+                                  font_filename=fnt,
+                                  font_size=42, font_min_size=34,
+                                  color=self.card_color.text_color,
+                                  place='center', height_compensations=(26, 30, 12))
             if fnt == self.text_font1:
                 fnt = self.text_font2
             else:
