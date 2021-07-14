@@ -2,6 +2,7 @@
 Creates a flashcard model to help you to study another language. The model look like this:
 <br/>
 ![Flashcard Image](examples/fc_example.jpg)
+<br/>
 It's a colored flashcard with title field on top, and a set of text field for sentences.
 
 ### How to use it
