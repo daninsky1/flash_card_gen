@@ -23,11 +23,9 @@ SOFTWARE.
 """
 from PIL import Image, ImageDraw, ImageFont
 from PIL import ImageColor
-from PIL.Image import Image
-
 from image_utils import ImageText
-import colors_const
 import piexif
+import colors_const
 
 
 class FCColor:
@@ -67,7 +65,7 @@ class FCColor:
 class FlashCard:
     """Card generates a flash card jpg and fodg."""
 
-    def __init__(self, card_color=None, title=None, sentences=None,
+    def __init__(self, title=None, sentences=None, card_color=None,
                  card_number=None, watermark=None):
         if not isinstance(sentences, list) and not isinstance(sentences, tuple):
             raise TypeError('sentences must be a tuple or list')
@@ -75,11 +73,12 @@ class FlashCard:
             raise AttributeError("sentences exceeds 20 elements")
 
         # Flash card and boxes sizes
-        self.flash_card = Image.new("RGB", self.fc_sz, "#777777")
         self.fc_sz = (1080, 1920)  # Hard coded size
         self.w, self.h = self.fc_sz
         self.title_box_sz = [self.w, 174]  # Hard coded title box size
         self.div_text_box = list(range(self.title_box_sz[1], self.h, round(self.h / 22)))
+        self.div_text_box[len(self.div_text_box)-1] = self.h
+        self.flash_card = Image.new("RGB", self.fc_sz, "#777777")
 
         # Flash card appearance
         self.card_color = card_color
@@ -119,14 +118,14 @@ class FlashCard:
 
         # Sentence boxes
         for i in range(len(self.div_text_box)):
-            if i == len(self.div_text_box) - 2:
-                break
             if (i + 1) % 2 != 0:
                 draw.rectangle(((0, self.div_text_box[i]), (self.w, self.div_text_box[i + 1])),
                                fill=self.card_color.text_box_color1)
             else:
                 draw.rectangle(((0, self.div_text_box[i]), (self.w, self.div_text_box[i + 1])),
                                fill=self.card_color.text_box_color2)
+                if i == len(self.div_text_box) - 2:
+                    break
         # TODO: remove n_size bug
         # Draw watermark
         if self.watermark:
@@ -182,16 +181,14 @@ class FlashCard:
         self.exif_bytes = piexif.dump(exif_dict)
 
     def __draw_all(self):
-        """Draw all flash card elements."""
+        """Draw all flashcard elements in the standard order."""
         self.draw_bg()
         self.draw_title()
         self.draw_sentences()
 
     def save(self, path):
-        if self.flash_card is None:
-            self.__draw_all()
-        else:
-            print("Warning: Calling any draw method will disable the automatic call to __draw_all().")
+        """Save in JPG format."""
+        self.__draw_all()
         self.flash_card.save(path, exif=self.exif_bytes)
 
 
