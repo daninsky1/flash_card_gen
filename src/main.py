@@ -1,44 +1,7 @@
-import sys
 import fc
 from colors_const import COLOR_NAMES_TO_HEX
-sys.path.append("../../phrase_pair_db")
-import database
 
-from PIL import Image, ImageDraw, ImageFont, ImageColor
-from image_utils import ImageText
-import os
-import os.path
-import pathlib
-
-# Canvas.
-fc_sz = [1080, 1920]
-
-# Title
-title = 'Estudos'
-
-# Sentences
-sentences = [
-    "There's a group of people at the restaurant.",
-    "Há um grupo de pessoas no restaurante.",
-    "I don't enjoy running.",
-    "Eu não curto correr.",
-    "I like listening to guitar music.",
-    "Eu gosto de ouvir música de violão.",
-    "Where do you go fishing?",
-    "Onde você vai pescar?",
-    "Do you like playing soccer?",
-    "Você gosta de jogar futebol?",
-    "Some of the girls play with dolls.",
-    "Algumas das meninas brincam com bonecas.",
-    "Where do you go swimming?",
-    "Onde você vai nadar?",
-    "I enjoy fishing with them.",
-    "Eu curto pescar com eles.",
-    "A dancing group.",
-    "Um grupo de dança.",
-    "Some of my friends go dancing every week.",
-    "Alguns dos meus amigos vão dançar toda semana.",
-]
+# TODO: update colors test/examples
 """
 def render_colors_test(color_name=None, color_hex=None):"""
     # Render colors tests, if color render one card, else, render all colors
@@ -97,10 +60,7 @@ def make_cards(file, color, title=None):
 
 
 def riffle_shuffle(lst1, lst2):
-    """Riffle shuffles two list into one.
-
-    One of each in order in a new list.
-    """
+    """Riffle shuffles two list in a new list."""
     if len(lst1) != lst2:
         raise AttributeError("Lists must have the same length")
     new_list = []
@@ -110,7 +70,33 @@ def riffle_shuffle(lst1, lst2):
     return new_list
 
 
-orange = fc.FCColor.from_list(COLOR_NAMES_TO_HEX["Orange"])
-fc = fc.FlashCard(fc_sz, orange, title, sentences)
-fp = "../out/flash_card_out.jpg"
+# Our data
+title = "Simple Past Tense"
+sentences = [
+    "I saw a movie yesterday.",
+    "Eu assisti um filme ontem.",
+    "I watched movie last night.",
+    "Eu assisti filme ontem à noite.",
+    "Last year, I traveled to Japan.",
+    "Ano passado, eu viajei para o Japão",
+    "Last year, I didn't travel to South Korea.",
+    "No ano passado, não viajei para a Coréia do Sul.",
+    "Did you have dinner last night?",
+    "Você jantou ontem à noite?",
+    "She washed her car.",
+    "Ela lavou o carro dela.",
+    "I finished work.",
+    "Eu terminei o trabalho.",
+    "I lived in Brazil for 25 years.",
+    "Eu morei no Brasil por 25 anos.",
+    "It rained yesterday.",
+    "Choveu ontem.",
+    "They didn't live in Canada.",
+    "Eles não moram no Canada."
+]
+# FCColor
+color = fc.FCColor.from_list(COLOR_NAMES_TO_HEX["Forest"])
+# FlashCard
+fc = fc.FlashCard(title, sentences, color)
+fp = "../examples/fc_example.jpg"
 fc.save(fp)
